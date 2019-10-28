@@ -16,7 +16,7 @@ Use [Firebase Realtime Database](https://firebase.google.com/products/realtime-d
 
 * Setup a local dev env (e.g. [http-server](https://www.npmjs.com/package/http-server))
 * Signup for [Firebase](https://www.firebase.com/) free account
-* Get the skeleton (clone the repo or simply [download](https://bitbucket.org/interludedevs/candidatehomework/downloads) as a zip file)
+* Get the skeleton (clone the repo or simply [download](https://bitbucket.org/interludedevs/homework/get/9bcfabb5de99.zip) as a zip file)
 * Deploy the skeleton's files into the dev env
 * Start coding!
 
