@@ -24,7 +24,7 @@ Use [Firebase Realtime Database](https://firebase.google.com/products/realtime-d
 
 * Code that works according to the requirements
 * Understanding of Javascript fundamentals
-* A modular design (we strongly recommend using [webpack](https://webpack.github.io/))
+* A modular design (we strongly recommend using [webpack](https://webpack.github.io/) or [rollup](https://rollupjs.org/))
 * Attention to detail
 * Abilities to self learn how to work with new APIs and webservices
 * Clear, beautiful and properly documented code
