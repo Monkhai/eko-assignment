@@ -1,10 +1,10 @@
 # README #
 
-This project is a skeleton for Eko's homework assignment.
+This project is a boilerplate for Eko's homework assignment.
 
 ## Requirements ##
 
-The skeleton includes a simple web page which includes an HTML5 Video Element and placeholders for **functionality you will need to implement:**
+The boilerplate includes a simple web page which includes an HTML5 Video Element and placeholders for **functionality you will need to implement:**
 
 * Play/Pause toggle functionality
 * Progress indication - update the time label as the video plays
@@ -15,9 +15,9 @@ Use [Firebase Realtime Database](https://firebase.google.com/products/realtime-d
 
 ## How do I get set up? ##
 
-* Get the skeleton (clone the repo or simply download as a zip)
+* Get the boilerplate (clone the repo or simply download as a zip)
 * Setup a local development environment (e.g. [http-server](https://www.npmjs.com/package/http-server))
-* The Firebase project has been setup in advance, you only to update the `DATABASE_URL_PLACEHOLDER` in the code with the one you were provided with in the email
+* The Firebase project has been setup in advance, you only to update the `DATABASE_URL_PLACEHOLDER` in the code with the one you were provided with in the email.
 * Start coding!
 
 ## Things to consider ##
