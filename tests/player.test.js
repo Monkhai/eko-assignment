@@ -24,13 +24,9 @@ describe('Player', () => {
     `
   })
 
-  test('initializes stats', () => {
+  test('initialize', () => {
     const player = new Player('test-video')
     expect(player.stats).toEqual(initialStats)
-  })
-
-  test('initializes elements', () => {
-    const player = new Player('test-video')
     expect(player.playerRef).toBeDefined()
     expect(player.playButtonRef).toBeDefined()
     expect(player.playSvgRef).toBeDefined()
@@ -45,16 +41,10 @@ describe('Player', () => {
     expect(player.dislikeOutlineSvgRef).toBeDefined()
     expect(player.dislikeFillSvgRef).toBeDefined()
     expect(player.viewsCountRef).toBeDefined()
-  })
-
-  test('initializes AbortController', () => {
-    const player = new Player('test-video')
     expect(player.abortController).toBeDefined()
-  })
-
-  test('should initialize the db properly', () => {
-    const player = new Player('test-video')
     expect(player.db).toBeDefined()
+    expect(player.videoName).toBeDefined()
+    expect(player.viewThreshold).toBeDefined()
   })
 
   test('player.togglePlaying()', () => {

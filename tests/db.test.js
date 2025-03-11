@@ -41,7 +41,7 @@ describe('DB', () => {
     const abortController = new AbortController()
     const d = new DB(abortController, db, storage)
     const dbName = 'video1'
-    await d.updateViews(dbName)
+    await d.handleUpdateViews(dbName)
     const r = ref(db, `videos/${dbName}/stats/views`)
     const snapshot = await get(r)
     expect(snapshot.val()).toBe(1)

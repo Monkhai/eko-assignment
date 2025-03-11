@@ -163,7 +163,7 @@ export class DB {
   /**
    * @param {string} name
    */
-  async updateViews(name) {
+  async handleUpdateViews(name) {
     const baseKey = this.#getStorageKey(name)
     this.#storage.set(`${baseKey}_views`, true)
     await this.#updateStat(name, 'views', 1)

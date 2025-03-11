@@ -2,6 +2,8 @@ import { DB, initialStats } from './db'
 import { db } from '../firebase'
 import { storage } from './storage'
 
+const THRESHOLD_CONSTANT = 0.25
+
 /**
  * A video player controller that manages playback and UI state.
  * Handles play/pause functionality and time display updates.
@@ -9,6 +11,23 @@ import { storage } from './storage'
 export class Player {
   /** @type {string} */
   videoName
+
+  // threshold before counting as a view
+  /** @type {number} */
+  viewThreshold
+
+  // TODO: explain that this is not safe in docs
+  // flag to check if the view has been updated this session
+  /** @type {boolean} */
+  hasUpdatedView = false
+
+  // accumulated watch time since the last update
+  /** @type {number} */
+  accumulatedWatchTime = 0
+
+  // time of the last update
+  /** @type {number} */
+  lastUpdateTime = 0
 
   /** @type {HTMLVideoElement} */
   playerRef
@@ -81,6 +100,7 @@ export class Player {
     this.dislikeOutlineSvgRef = document.getElementById('dislike_svg_outline')
     this.dislikeFillSvgRef = document.getElementById('dislike_svg_fill')
     this.viewsCountRef = document.getElementById('views_count')
+
     // initialize the AbortController
     this.abortController = new AbortController()
     const signal = this.abortController.signal
@@ -91,7 +111,11 @@ export class Player {
     this.playerRef.addEventListener('play', this.updateButton.bind(this), { signal })
     this.playerRef.addEventListener('pause', this.updateButton.bind(this), { signal })
     this.playerRef.addEventListener('ended', this.updateButton.bind(this), { signal })
+    this.playerRef.addEventListener('ended', this.resetViewState.bind(this), { signal })
     this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this), { signal })
+
+    // set the view threshold to half of the video duration
+    this.viewThreshold = this.playerRef.duration * THRESHOLD_CONSTANT
 
     // setup db
     this.db = new DB(this.abortController, db, storage)
@@ -104,6 +128,12 @@ export class Player {
 
     // initialize the vote button fill
     this.updateVoteButtonFill()
+  }
+
+  resetViewState() {
+    this.hasUpdatedView = false
+    this.accumulatedWatchTime = 0
+    this.lastUpdateTime = 0
   }
 
   /*
@@ -136,10 +166,23 @@ export class Player {
     Updates the current time display with the video's progress
    */
   updateCurrentTime() {
-    const time = this.playerRef.currentTime
-    const timeInSeconds = formatSecondsToTimestamp(Math.floor(time))
+    const currentTime = this.playerRef.currentTime
+    const timeInSeconds = formatSecondsToTimestamp(Math.floor(currentTime))
     if (this.currentTimeRef.textContent !== timeInSeconds) {
       this.currentTimeRef.textContent = timeInSeconds
+    }
+
+    // Calculate the time watched since the last update
+    const timeWatched = currentTime - this.lastUpdateTime
+    if (timeWatched > 0) {
+      this.accumulatedWatchTime += timeWatched
+      this.lastUpdateTime = currentTime
+    }
+
+    // Update the view only if the accumulated watch time exceeds the threshold
+    if (this.accumulatedWatchTime >= this.viewThreshold && !this.hasUpdatedView) {
+      this.db.handleUpdateViews(this.videoName)
+      this.hasUpdatedView = true // Set the flag to true after updating
     }
   }
 
