@@ -1,8 +1,16 @@
-.viewsContainer {
+button {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
+.views_container {
   float: left;
 }
 
-.voteContainer {
+.vote_container {
   float: right;
 }
 
@@ -49,6 +57,36 @@ video {
   margin: 1rem auto;
 }
 
-.hidden {
-  display: none;
+.vote_container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vote_button_container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vote_svg {
+  width: 24px;
+  height: 24px;
+}
+
+.dislike_svg {
+  transform: rotate(180deg);
+}
+
+.default_button {
+  background-color: transparent;
+  border-width: 0;
+  color: black;
+}
+
+.primary_button {
+  background-color: rgb(37, 99, 235);
+  color: white;
 }

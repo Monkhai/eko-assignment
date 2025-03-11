@@ -12,14 +12,17 @@ export class DB {
   #abortController
   /** @type {Database} */
   #db
-  /** @type {(name: string) => string} */
-  #videoStatsPath = name => `videos/${name}/stats`
   /** @type {Storage} */
   #storage
+  /** @type {(name: string) => string} */
+  #getStatsPath = name => `videos/${name}/stats`
+  /** @type {(name: string) => string} */
+  #getStorageKey = name => `video_${name}`
+
   /**
-   * @param {AbortController} abortController - Controller for aborting operations
-   * @param {Database} db - Firebase Realtime Database instance
-   * @param {Storage} storage - Storage instance
+   * @param {AbortController} abortController
+   * @param {Database} db
+   * @param {Storage} storage
    */
   constructor(abortController, db, storage) {
     this.#abortController = abortController
@@ -28,138 +31,132 @@ export class DB {
   }
 
   /**
-   *
-   * @param {string} name - the name of the video to like
+   * @param {string} name
    */
-  handleLikeVideo(name) {
-    const userLikedVideo = this.#storage.get(`video_${name}_likes`)
-    const userDislikedVideo = this.#storage.get(`video_${name}_dislikes`)
+  async handleLikeVideo(name) {
+    const baseKey = this.#getStorageKey(name)
+    const userLiked = this.#storage.get(`${baseKey}_likes`)
+    const userDisliked = this.#storage.get(`${baseKey}_dislikes`)
 
-    if (userDislikedVideo) {
-      this.#removeDislike(name)
+    // If the user disliked the video, remove the dislike before adding a like
+    if (userDisliked) {
+      await this.#removeDislike(name)
     }
 
-    if (userLikedVideo) {
-      this.#removeLike(name)
+    // if the user already liked the video, remove the like
+    if (userLiked) {
+      await this.#removeLike(name)
     } else {
-      this.#likeVideo(name)
+      await this.#addLike(name)
     }
   }
 
   /**
-   * @param {string} name - the name of the video to like
+   * @param {string} name
    */
-  #likeVideo(name) {
-    const statsPath = this.#videoStatsPath(name)
-    const videoRef = ref(this.#db, statsPath)
-    runTransaction(videoRef, currentStats => {
-      if (!currentStats) {
-        return { ...initialStats, likes: 1 }
-      }
-      if (!Object.hasOwn(currentStats, 'likes')) {
-        throw Error('handle me')
-      }
-      return {
-        ...currentStats,
-        likes: currentStats.likes + 1,
-      }
-    })
-    this.#storage.set(`video_${name}_likes`, true)
-  }
+  async handleDislikeVideo(name) {
+    const baseKey = this.#getStorageKey(name)
+    const userLiked = this.#storage.get(`${baseKey}_likes`)
+    const userDisliked = this.#storage.get(`${baseKey}_dislikes`)
 
-  /**
-   * @param {string} name - the name of the video to remove like
-   */
-  #removeLike(name) {
-    const storageKey = `video_${name}_likes`
-    this.#storage.remove(storageKey)
-    const statsPath = this.#videoStatsPath(name)
-    const videoRef = ref(this.#db, statsPath)
-    runTransaction(videoRef, currentStats => {
-      if (!currentStats) {
-        return { ...initialStats, likes: 0 }
-      }
-      if (!Object.hasOwn(currentStats, 'likes')) {
-        throw Error('handle me')
-      }
-      return {
-        ...currentStats,
-        likes: currentStats.likes - 1,
-      }
-    })
-    this.#storage.remove(`video_${name}_likes`)
-  }
-
-  /**
-   *
-   * @param {string} name - the name of the video to dislike
-   */
-  handleDislikeVideo(name) {
-    const userDislikedVideo = this.#storage.get(`video_${name}_dislikes`)
-    const userLikedVideo = this.#storage.get(`video_${name}_likes`)
-
-    if (userLikedVideo) {
-      this.#removeLike(name)
+    // if the user already liked the video, remove the like before adding a dislike
+    if (userLiked) {
+      await this.#removeLike(name)
     }
 
-    if (userDislikedVideo) {
-      this.#removeDislike(name)
+    // if the user already disliked the video, remove the dislike before adding a new one
+    if (userDisliked) {
+      await this.#removeDislike(name)
     } else {
-      this.#dislikeVideo(name)
+      await this.#addDislike(name)
     }
   }
 
   /**
-   *
-   * @param {string} name - the name of the video to dislike
+   * @private
+   * @param {string} name
    */
-  #dislikeVideo(name) {
-    const statsPath = this.#videoStatsPath(name)
-    const videoRef = ref(this.#db, statsPath)
-    runTransaction(videoRef, currentStats => {
-      if (!currentStats) {
-        return { ...initialStats, dislikes: 1 }
-      }
-      if (!Object.hasOwn(currentStats, 'dislikes')) {
-        throw Error('handle me')
-      }
-      return {
-        ...currentStats,
-        dislikes: currentStats.dislikes + 1,
-      }
-    })
-    this.#storage.set(`video_${name}_dislikes`, true)
+  async #addLike(name) {
+    const baseKey = this.#getStorageKey(name)
+    this.#storage.set(`${baseKey}_likes`, true)
+    await this.#updateStat(name, 'likes', 1)
   }
 
   /**
-   * @param {string} name - the name of the video to remove dislike
+   * @private
+   * @param {string} name
    */
-  #removeDislike(name) {
-    const storageKey = `video_${name}_dislikes`
-    this.#storage.remove(storageKey)
-    const statsPath = this.#videoStatsPath(name)
+  async #removeLike(name) {
+    const baseKey = this.#getStorageKey(name)
+    this.#storage.remove(`${baseKey}_likes`)
+    await this.#updateStat(name, 'likes', -1)
+  }
+
+  /**
+   * @private
+   * @param {string} name
+   */
+  async #addDislike(name) {
+    const baseKey = this.#getStorageKey(name)
+    this.#storage.set(`${baseKey}_dislikes`, true)
+    await this.#updateStat(name, 'dislikes', 1)
+  }
+
+  /**
+   * @private
+   * @param {string} name
+   */
+  async #removeDislike(name) {
+    const baseKey = this.#getStorageKey(name)
+    this.#storage.remove(`${baseKey}_dislikes`)
+    await this.#updateStat(name, 'dislikes', -1)
+  }
+
+  /**
+   * @private
+   * @param {string} name
+   * @param {string} statName
+   * @param {number} delta
+   */
+  async #updateStat(name, statName, delta) {
+    const statsPath = this.#getStatsPath(name)
     const videoRef = ref(this.#db, statsPath)
-    runTransaction(videoRef, currentStats => {
+    return runTransaction(videoRef, currentStats => {
       if (!currentStats) {
-        return { ...initialStats, dislikes: 0 }
+        return { ...initialStats, [statName]: Math.max(0, delta) }
       }
-      if (!Object.hasOwn(currentStats, 'dislikes')) {
-        throw Error('handle me')
+      if (!Object.hasOwn(currentStats, statName)) {
+        throw Error(`Missing stat: ${statName}`)
       }
       return {
         ...currentStats,
-        dislikes: currentStats.dislikes - 1,
+        [statName]: currentStats[statName] + delta,
       }
     })
   }
 
   /**
-   *
-   * @param {string} name - the name of the video
-   * @param {({views: number, likes: number, dislikes: number}) => void} callback - the name of the video
+   * @param {string} name
+   * @returns {boolean}
+   */
+  isLiked(name) {
+    return this.#storage.get(`${this.#getStorageKey(name)}_likes`)
+  }
+
+  /**
+   * @param {string} name
+   * @returns {boolean}
+   */
+  isDisliked(name) {
+    return this.#storage.get(`${this.#getStorageKey(name)}_dislikes`)
+  }
+
+  /**
+   * @param {string} name
+   * @param {({views: number, likes: number, dislikes: number}) => void} callback
    */
   listenToStatUpdates(name, callback) {
-    const statsPath = this.#videoStatsPath(name)
+    const statsPath = this.#getStatsPath(name)
     const videoRef = ref(this.#db, statsPath)
     const unsubscribe = onValue(videoRef, snapshot => {
       const values = snapshot.val()

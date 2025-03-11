@@ -1,27 +1,26 @@
 import { DB, initialStats } from './db'
 import { db } from './firebase'
 import { storage } from './storage'
+
 /**
  * A video player controller that manages playback and UI state.
  * Handles play/pause functionality and time display updates.
  */
 class Player {
-  /** @type {string} */
   videoName
-  /** @type {HTMLVideoElement | null} */
   playerRef
-  /** @type {HTMLButtonElement} */
   playButtonRef
-  /** @type {HTMLElement} */
   playSvgRef
-  /** @type {HTMLElement} */
   pauseSvgRef
-  /** @type {HTMLElement} */
   currentTimeRef
-  /** @type {HTMLElement} */
   likeButtonRef
-  /** @type {HTMLElement} */
   dislikeButtonRef
+  likeCountRef
+  dislikeCountRef
+  likeOutlineSvgRef
+  likeFillSvgRef
+  dislikeOutlineSvgRef
+  dislikeFillSvgRef
   /** @type {AbortController} */
   abortController
   /**  @type {DB} */
@@ -42,6 +41,12 @@ class Player {
     this.currentTimeRef = document.getElementById('current_time')
     this.likeButtonRef = document.getElementById('like_button')
     this.dislikeButtonRef = document.getElementById('dislike_button')
+    this.likeCountRef = document.getElementById('like_count')
+    this.dislikeCountRef = document.getElementById('dislike_count')
+    this.likeOutlineSvgRef = document.getElementById('like_svg_outline')
+    this.likeFillSvgRef = document.getElementById('like_svg_fill')
+    this.dislikeOutlineSvgRef = document.getElementById('dislike_svg_outline')
+    this.dislikeFillSvgRef = document.getElementById('dislike_svg_fill')
 
     // initialize the AbortController
     this.abortController = new AbortController()
@@ -63,6 +68,9 @@ class Player {
     // setup db functionality
     this.likeButtonRef.addEventListener('click', this.likeVideo.bind(this), { signal })
     this.dislikeButtonRef.addEventListener('click', this.dislikeVideo.bind(this), { signal })
+
+    // initialize the vote button fill
+    this.updateVoteButtonFill()
   }
 
   /*
@@ -107,10 +115,12 @@ class Player {
    */
   updateStats(stats) {
     if (stats.likes !== this.stats.likes) {
-      this.likeButtonRef.textContent = `thumbsUp: ${stats.likes}`
+      this.likeCountRef.textContent = stats.likes
+      this.updateVoteButtonFill()
     }
     if (stats.dislikes !== this.stats.dislikes) {
-      this.dislikeButtonRef.textContent = `thumbsDown: ${stats.dislikes}`
+      this.dislikeCountRef.textContent = stats.dislikes
+      this.updateVoteButtonFill()
     }
     if (stats.views !== this.stats.views) {
       alert('handle views')
@@ -119,12 +129,37 @@ class Player {
     this.stats = stats
   }
 
-  likeVideo() {
-    this.db.handleLikeVideo(this.videoName)
+  async likeVideo() {
+    await this.db.handleLikeVideo(this.videoName)
   }
 
-  dislikeVideo() {
-    this.db.handleDislikeVideo(this.videoName)
+  async dislikeVideo() {
+    await this.db.handleDislikeVideo(this.videoName)
+  }
+
+  /**
+   * Updates the fill state of the vote buttons based on the user's vote
+   */
+  updateVoteButtonFill() {
+    // if the user has liked the video, show the fill svg
+    if (this.db.isLiked(this.videoName)) {
+      this.likeOutlineSvgRef.classList.add('hidden')
+      this.likeFillSvgRef.classList.remove('hidden')
+    } else {
+      // if the user has not liked the video, show the outline svg
+      this.likeOutlineSvgRef.classList.remove('hidden')
+      this.likeFillSvgRef.classList.add('hidden')
+    }
+
+    // if the user has disliked the video, show the fill svg
+    if (this.db.isDisliked(this.videoName)) {
+      this.dislikeOutlineSvgRef.classList.add('hidden')
+      this.dislikeFillSvgRef.classList.remove('hidden')
+    } else {
+      // if the user has not disliked the video, show the outline svg
+      this.dislikeOutlineSvgRef.classList.remove('hidden')
+      this.dislikeFillSvgRef.classList.add('hidden')
+    }
   }
 
   /*
