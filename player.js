@@ -6,15 +6,18 @@
 // // Initialize Realtime Database and get a reference to the service.
 // const database = firebase.database(app)
 
-class VideoController {
+// TODO: use abort controller to remove all event listeners when unmounting
+class Player {
+  /** @type {HTMLVideoElement | null} */
   playerRef
   buttonRef
   playSvgRef
   pauseSvgRef
+  duration
 
   constructor() {
     this.playerRef = document.getElementById('player')
-    this.buttonRef = document.getElementById('playPause')
+    this.buttonRef = document.getElementById('play_button')
     this.playSvgRef = document.getElementById('play_svg')
     this.pauseSvgRef = document.getElementById('pause_svg')
 
@@ -25,6 +28,10 @@ class VideoController {
     this.playerRef.addEventListener('play', this.updateButton.bind(this))
     this.playerRef.addEventListener('pause', this.updateButton.bind(this))
     this.playerRef.addEventListener('ended', this.updateButton.bind(this))
+    this.duration = this.playerRef.duration
+    this.playerRef.ontimeupdate = ev => {
+      console.log(this.playerRef.currentTime)
+    }
   }
 
   togglePlaying() {
@@ -50,5 +57,5 @@ class VideoController {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const videoController = new VideoController('player', 'playPause')
+  new Player()
 })
