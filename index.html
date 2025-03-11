@@ -3,15 +3,17 @@
         <link rel="stylesheet" href="style.css" type="text/css">
     </head>
     <body>
-        <video autoplay muted>
-            <source src="https://storage.eko.com/efu/homework-assignment/Oreo_try_1_vid.webm" type="video/webm" />
-            <source src="https://storage.eko.com/efu/homework-assignment/Oreo_try_1_vid.mp4" type="video/mp4" />
-        </video>
-        <div class="controls">
-            <button id="playPause">Play/Pause</button>
-            <div class="timeContainer">
-                <span class="currentTimeCaption">Current time:</span>
-                <span class="currentTime">0:00</span>
+        <div class="player_container">
+            <video id="player" autoplay muted>
+                <source src="https://storage.eko.com/efu/homework-assignment/Oreo_try_1_vid.webm" type="video/webm" />
+                <source src="https://storage.eko.com/efu/homework-assignment/Oreo_try_1_vid.mp4" type="video/mp4" />
+            </video>
+            <div class="controls">
+                <button id="playPause">Play/Pause</button>
+                <div class="timeContainer">
+                    <span class="currentTimeCaption">Current time:</span>
+                    <span class="currentTime">0:00</span>
+                </div>
             </div>
         </div>
         <div class="social">
@@ -26,9 +28,9 @@
         </div>
 
         <!-- Firebase -->
-        <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-database-compat.js"></script>
+        <!-- <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-database-compat.js"></script> -->
 
-        <script type="text/javascript" src="player.js"></script>
+        <script type="text/javascript" src="player.js" defer></script>
     </body>
 </html>
