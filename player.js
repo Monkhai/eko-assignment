@@ -17,6 +17,7 @@ class Player {
   playSvgRef
   pauseSvgRef
   currentTimeRef
+  abortController
 
   constructor() {
     this.playerRef = document.getElementById('player')
@@ -25,14 +26,17 @@ class Player {
     this.pauseSvgRef = document.getElementById('pause_svg')
     this.currentTimeRef = document.getElementById('current_time')
 
+    this.abortController = new AbortController()
+    const signal = this.abortController.signal
+
     //add play/pause functionality to the button
-    this.buttonRef.addEventListener('click', this.togglePlaying.bind(this))
+    this.buttonRef.addEventListener('click', this.togglePlaying.bind(this), { signal })
 
     // Listen to video events to update UI accordingly
-    this.playerRef.addEventListener('play', this.updateButton.bind(this))
-    this.playerRef.addEventListener('pause', this.updateButton.bind(this))
-    this.playerRef.addEventListener('ended', this.updateButton.bind(this))
-    this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this))
+    this.playerRef.addEventListener('play', this.updateButton.bind(this), { signal })
+    this.playerRef.addEventListener('pause', this.updateButton.bind(this), { signal })
+    this.playerRef.addEventListener('ended', this.updateButton.bind(this), { signal })
+    this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this), { signal })
   }
 
   togglePlaying() {
@@ -57,10 +61,14 @@ class Player {
 
   updateCurrentTime() {
     const time = this.playerRef.currentTime
-    const timeInSeconds = formatSecondsToTimestamp(Math.round(time))
+    const timeInSeconds = formatSecondsToTimestamp(Math.floor(time))
     if (this.currentTimeRef.textContent !== timeInSeconds) {
       this.currentTimeRef.textContent = timeInSeconds
     }
+  }
+
+  cleanup() {
+    this.abortController.abort()
   }
 }
 
@@ -73,10 +81,16 @@ function formatSecondsToTimestamp(seconds) {
 }
 
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+  let player
   document.addEventListener('DOMContentLoaded', () => {
-    new Player()
+    player = new Player()
   })
 
   // added to allow jest to find Player during testing
   window.Player = Player
+
+  window.addEventListener('beforeunload', () => {
+    if (!player) return
+    player.cleanup()
+  })
 }
