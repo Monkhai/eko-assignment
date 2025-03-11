@@ -1,42 +1,68 @@
+import { DB, initialStats } from './db'
+import { db } from './firebase'
+import { storage } from './storage'
 /**
  * A video player controller that manages playback and UI state.
  * Handles play/pause functionality and time display updates.
  */
 class Player {
+  /** @type {string} */
+  videoName
   /** @type {HTMLVideoElement | null} */
   playerRef
   /** @type {HTMLButtonElement} */
-  buttonRef
+  playButtonRef
   /** @type {HTMLElement} */
   playSvgRef
   /** @type {HTMLElement} */
   pauseSvgRef
   /** @type {HTMLElement} */
   currentTimeRef
+  /** @type {HTMLElement} */
+  likeButtonRef
+  /** @type {HTMLElement} */
+  dislikeButtonRef
   /** @type {AbortController} */
   abortController
+  /**  @type {DB} */
+  db
+  /** @type {{likes: number, dislikes: number, views: number}} */
+  stats = initialStats
 
+  //------------------------------------------------------------
   /**
-   * Initializes the player by setting up DOM references and event listeners
+   * @param {string} videoName
    */
-  constructor() {
+  constructor(videoName) {
+    this.videoName = videoName
     this.playerRef = document.getElementById('player')
-    this.buttonRef = document.getElementById('play_button')
+    this.playButtonRef = document.getElementById('play_button')
     this.playSvgRef = document.getElementById('play_svg')
     this.pauseSvgRef = document.getElementById('pause_svg')
     this.currentTimeRef = document.getElementById('current_time')
+    this.likeButtonRef = document.getElementById('like_button')
+    this.dislikeButtonRef = document.getElementById('dislike_button')
 
+    // initialize the AbortController
     this.abortController = new AbortController()
     const signal = this.abortController.signal
-
     //add play/pause functionality to the button
-    this.buttonRef.addEventListener('click', this.togglePlaying.bind(this), { signal })
+    this.playButtonRef.addEventListener('click', this.togglePlaying.bind(this), { signal })
 
     // Listen to video events to update UI accordingly
     this.playerRef.addEventListener('play', this.updateButton.bind(this), { signal })
     this.playerRef.addEventListener('pause', this.updateButton.bind(this), { signal })
     this.playerRef.addEventListener('ended', this.updateButton.bind(this), { signal })
     this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this), { signal })
+
+    // setup db
+    this.db = new DB(this.abortController, db, storage)
+    // create a realtime connection to update UI when database changes
+    this.db.listenToStatUpdates('video1', this.updateStats.bind(this))
+
+    // setup db functionality
+    this.likeButtonRef.addEventListener('click', this.likeVideo.bind(this), { signal })
+    this.dislikeButtonRef.addEventListener('click', this.dislikeVideo.bind(this), { signal })
   }
 
   /*
@@ -76,6 +102,31 @@ class Player {
     }
   }
 
+  /**
+   * @param {{views: number, likes: number, dislikes: number}} stats - the name of the video
+   */
+  updateStats(stats) {
+    if (stats.likes !== this.stats.likes) {
+      this.likeButtonRef.textContent = `thumbsUp: ${stats.likes}`
+    }
+    if (stats.dislikes !== this.stats.dislikes) {
+      this.dislikeButtonRef.textContent = `thumbsDown: ${stats.dislikes}`
+    }
+    if (stats.views !== this.stats.views) {
+      alert('handle views')
+    }
+
+    this.stats = stats
+  }
+
+  likeVideo() {
+    this.db.handleLikeVideo(this.videoName)
+  }
+
+  dislikeVideo() {
+    this.db.handleDislikeVideo(this.videoName)
+  }
+
   /*
     Removes all event listeners when the player is destroyed
    */
@@ -101,7 +152,7 @@ function formatSecondsToTimestamp(seconds) {
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
   let player
   document.addEventListener('DOMContentLoaded', () => {
-    player = new Player()
+    player = new Player('video1')
   })
 
   // added to allow jest to find Player during testing

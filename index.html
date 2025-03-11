@@ -28,19 +28,15 @@
         <div class="social">
             <div class="viewsContainer">
                 <span class="viewsCaption">Views:</span>
-                <span class="views">0</span>
+                <!-- TODO: update classname to not match with id -->
+                <span id="views" class="views">0</span>
             </div>
             <div class="voteContainer">
-                <button id="thumbsUp">thumbsUp: 0</button>
-                <button id="thumbsDown">thumbsDown: 0</button>
+                <button id="like_button">thumbsUp: 0</button>
+                <button id="dislike_button">thumbsDown: 0</button>
             </div>
         </div>
 
-        <!-- Firebase -->
-        <!-- <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-database-compat.js"></script> -->
-
-        <script type="module" src="firebase.js"></script>
         <script type="module" src="player.js"></script>
     </body>
 </html>
