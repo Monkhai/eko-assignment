@@ -26,5 +26,8 @@ describe('Player', () => {
     // Verify that it found the elements
     expect(player.playerRef).not.toBeNull()
     expect(player.buttonRef).not.toBeNull()
+    expect(player.playSvgRef).not.toBeNull()
+    expect(player.pauseSvgRef).not.toBeNull()
+    expect(player.currentTimeRef).not.toBeNull()
   })
 })
