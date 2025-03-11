@@ -25,6 +25,15 @@ export class DB {
    * @param {Storage} storage
    */
   constructor(abortController, db, storage) {
+    if (!db) {
+      throw new Error('db is required')
+    }
+    if (!storage) {
+      throw new Error('storage is required')
+    }
+    if (!abortController) {
+      throw new Error('abortController is required')
+    }
     this.#abortController = abortController
     this.#db = db
     this.#storage = storage
@@ -149,6 +158,15 @@ export class DB {
    */
   isDisliked(name) {
     return this.#storage.get(`${this.#getStorageKey(name)}_dislikes`)
+  }
+
+  /**
+   * @param {string} name
+   */
+  async updateViews(name) {
+    const baseKey = this.#getStorageKey(name)
+    this.#storage.set(`${baseKey}_views`, true)
+    await this.#updateStat(name, 'views', 1)
   }
 
   /**

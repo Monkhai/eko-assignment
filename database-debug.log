@@ -1,0 +1,8 @@
+16:43:30.114 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+16:43:30.193 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
+16:45:29.998 [NamespaceSystem-akka.actor.default-dispatcher-5] INFO com.firebase.core.namespace.NamespaceActor - eko-homework-assignment-5 successfully activated FBKV (SurveyIdle(0)) wait: 65ms, init: 0ms
+16:46:38.031 [FirebaseWorkerPool-1-2] WARN com.firebase.core.persistence.backend.dummy.EmulatorMetadataPersistence - Multiple projectIds are not recommended in single project mode. Requested 
+namespace eko-homework-assignment-5-default-rtdb, but the emulator is configured for eko-homework-assignment-5. To 
+opt-out of single project mode add/set the singleProjectMode: false property in 
+the firebase.json emulators config. 
+16:46:38.036 [NamespaceSystem-akka.actor.default-dispatcher-6] INFO com.firebase.core.namespace.NamespaceActor - eko-homework-assignment-5-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 2ms, init: 0ms

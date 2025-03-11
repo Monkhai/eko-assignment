@@ -1,110 +1,166 @@
-require('./player.js')
+import { beforeEach, describe, expect, vi } from 'vitest'
+import { initialStats } from './db.js'
+import { Player } from './player.js'
 
+// test initial stats
 describe('Player', () => {
-  let player
-  let mockPaused = true
-
   beforeEach(() => {
+    vi.clearAllMocks()
     document.body.innerHTML = `
-      <video id="player"></video>
-      <button id="play_button"></button>
-      <svg id="play_svg"></svg>
-      <svg id="pause_svg" class="hidden"></svg>
-      <div id="current_time">00:00</div>
+    <video id="player"></video>
+    <button id="play_button"></button>
+    <svg id="play_svg" class="hidden"></svg>
+    <svg id="pause_svg"></svg>
+    <span id="current_time"></span>
+    <button id="like_button"></button>
+    <span id="like_count"></span>
+    <button id="dislike_button"></button>
+    <span id="dislike_count"></span>
+    <svg id="like_svg_outline" class="hidden"></svg>
+    <svg id="like_svg_fill" class="hidden"></svg>
+    <svg id="dislike_svg_outline" class="hidden"></svg>
+    <svg id="dislike_svg_fill" class="hidden"></svg>
+    <span id="views_count"></span>
     `
-
-    player = new Player()
-
-    // Replace functiosn and properties with mocks for testing
-    player.playerRef.play = jest.fn().mockImplementation(() => {
-      mockPaused = false
-      player.playerRef.dispatchEvent(new Event('play'))
-    })
-
-    player.playerRef.pause = jest.fn().mockImplementation(() => {
-      mockPaused = true
-      player.playerRef.dispatchEvent(new Event('pause'))
-    })
-
-    Object.defineProperty(player.playerRef, 'paused', {
-      get: () => mockPaused,
-      configurable: true,
-    })
   })
 
-  test('should properly toggle play and pause', () => {
-    // initial state testing
-    expect(player.playerRef.paused).toBe(true)
-    expect(player.playSvgRef.classList.contains('hidden')).toBe(false)
-    expect(player.pauseSvgRef.classList.contains('hidden')).toBe(true)
+  test('initializes stats', () => {
+    const player = new Player('test-video')
+    expect(player.stats).toEqual(initialStats)
+  })
 
-    // play
-    player.buttonRef.click()
+  test('initializes elements', () => {
+    const player = new Player('test-video')
+    expect(player.playerRef).toBeDefined()
+    expect(player.playButtonRef).toBeDefined()
+    expect(player.playSvgRef).toBeDefined()
+    expect(player.pauseSvgRef).toBeDefined()
+    expect(player.currentTimeRef).toBeDefined()
+    expect(player.likeButtonRef).toBeDefined()
+    expect(player.likeCountRef).toBeDefined()
+    expect(player.dislikeButtonRef).toBeDefined()
+    expect(player.dislikeCountRef).toBeDefined()
+    expect(player.likeOutlineSvgRef).toBeDefined()
+    expect(player.likeFillSvgRef).toBeDefined()
+    expect(player.dislikeOutlineSvgRef).toBeDefined()
+    expect(player.dislikeFillSvgRef).toBeDefined()
+    expect(player.viewsCountRef).toBeDefined()
+  })
 
-    // should be playing
-    expect(player.playerRef.play).toHaveBeenCalled()
-    expect(player.playerRef.paused).toBe(false)
+  test('initializes AbortController', () => {
+    const player = new Player('test-video')
+    expect(player.abortController).toBeDefined()
+  })
+
+  test('should initialize the db properly', () => {
+    const player = new Player('test-video')
+    expect(player.db).toBeDefined()
+  })
+
+  test('player.togglePlaying()', () => {
+    const player = new Player('test-video')
+    const videoElement = player.playerRef
+
+    // Mock play and pause methods
+    videoElement.play = vi.fn(() => {
+      Object.defineProperty(videoElement, 'paused', { value: false, configurable: true })
+    })
+    videoElement.pause = vi.fn(() => {
+      Object.defineProperty(videoElement, 'paused', { value: true, configurable: true })
+    })
+
+    // Initially, the video should be paused
+    Object.defineProperty(videoElement, 'paused', { value: false, configurable: true })
+    expect(videoElement.paused).toBe(false)
+
+    // Simulate play
+    player.togglePlaying()
+    expect(videoElement.pause).toHaveBeenCalled()
+    expect(videoElement.paused).toBe(true)
+
+    // Simulate play
+    player.togglePlaying()
+    expect(videoElement.play).toHaveBeenCalled()
+    expect(videoElement.paused).toBe(false)
+  })
+
+  test('player.updateButton()', () => {
+    const player = new Player('test-video')
+    const videoElement = player.playerRef
+    // initially the video should be paused
+    Object.defineProperty(videoElement, 'paused', { value: false, configurable: true })
+    expect(videoElement.paused).toBe(false)
+
     expect(player.playSvgRef.classList.contains('hidden')).toBe(true)
     expect(player.pauseSvgRef.classList.contains('hidden')).toBe(false)
 
-    // pause
-    player.buttonRef.click()
+    // simulate pause
+    Object.defineProperty(videoElement, 'paused', { value: true, configurable: true })
+    expect(videoElement.paused).toBe(true)
 
-    // Should now be paused
-    expect(player.playerRef.pause).toHaveBeenCalled()
-    expect(player.playerRef.paused).toBe(true)
+    player.playerRef.dispatchEvent(new Event('pause'))
     expect(player.playSvgRef.classList.contains('hidden')).toBe(false)
     expect(player.pauseSvgRef.classList.contains('hidden')).toBe(true)
+
+    // simulate play
+    Object.defineProperty(videoElement, 'paused', { value: false, configurable: true })
+    expect(videoElement.paused).toBe(false)
+
+    player.playerRef.dispatchEvent(new Event('play'))
+    expect(player.playSvgRef.classList.contains('hidden')).toBe(true)
+    expect(player.pauseSvgRef.classList.contains('hidden')).toBe(false)
   })
 
-  describe('Progress Indication', () => {
-    test('should update time label when video time updates', () => {
-      // Mock current time
-      Object.defineProperty(player.playerRef, 'currentTime', {
-        get: jest.fn().mockReturnValue(4.35),
-        configurable: true,
-      })
-
-      player.playerRef.dispatchEvent(new Event('timeupdate'))
-      expect(player.currentTimeRef.textContent).toBe('00:04')
-    })
+  test('player.updateCurrentTime()', () => {
+    const player = new Player('test-video')
+    player.playerRef.currentTime = 4.37
+    player.updateCurrentTime()
+    expect(player.currentTimeRef.textContent).toBe('00:04')
   })
 
-  describe('updateButton', () => {
-    test('should show correct icons based on video state', () => {
-      // Test paused state
-      mockPaused = true
-      player.updateButton()
-      expect(player.playSvgRef.classList.contains('hidden')).toBe(false)
-      expect(player.pauseSvgRef.classList.contains('hidden')).toBe(true)
-
-      // Test playing state
-      mockPaused = false
-      player.updateButton()
-      expect(player.playSvgRef.classList.contains('hidden')).toBe(true)
-      expect(player.pauseSvgRef.classList.contains('hidden')).toBe(false)
+  test('player.updateStats()', () => {
+    const player = new Player('test-video')
+    player.updateStats({
+      likes: 10,
+      dislikes: 5,
+      views: 100,
     })
+    expect(player.stats.likes).toBe(10)
+    expect(player.likeCountRef.textContent).toBe('10')
+    expect(player.stats.dislikes).toBe(5)
+    expect(player.dislikeCountRef.textContent).toBe('5')
+    expect(player.stats.views).toBe(100)
+    expect(player.viewsCountRef.textContent).toBe('100')
   })
 
-  describe('cleanup', () => {
-    test('should abort all event listeners when cleanup is called', () => {
-      // Mock abort function
-      player.abortController.abort = jest.fn()
+  test('player.updateVoteButtonFill()', () => {
+    const player = new Player('test-video')
+    player.db.isLiked = vi.fn(() => true)
+    player.updateVoteButtonFill()
+    expect(player.likeFillSvgRef.classList.contains('hidden')).toBe(false)
+    expect(player.dislikeOutlineSvgRef.classList.contains('hidden')).toBe(false)
+    expect(player.likeOutlineSvgRef.classList.contains('hidden')).toBe(true)
+    expect(player.dislikeFillSvgRef.classList.contains('hidden')).toBe(true)
 
-      // Call cleanup
-      player.cleanup()
+    player.db.isLiked = vi.fn(() => false)
+    player.updateVoteButtonFill()
+    expect(player.likeOutlineSvgRef.classList.contains('hidden')).toBe(false)
+    expect(player.dislikeOutlineSvgRef.classList.contains('hidden')).toBe(false)
+    expect(player.likeFillSvgRef.classList.contains('hidden')).toBe(true)
+    expect(player.dislikeFillSvgRef.classList.contains('hidden')).toBe(true)
 
-      // Verify abort was called
-      expect(player.abortController.abort).toHaveBeenCalled()
+    player.db.isDisliked = vi.fn(() => true)
+    player.updateVoteButtonFill()
+    expect(player.likeOutlineSvgRef.classList.contains('hidden')).toBe(false)
+    expect(player.dislikeOutlineSvgRef.classList.contains('hidden')).toBe(true)
+    expect(player.likeFillSvgRef.classList.contains('hidden')).toBe(true)
+    expect(player.dislikeFillSvgRef.classList.contains('hidden')).toBe(false)
 
-      // Try to trigger events after cleanup to verify they don't work
-      player.buttonRef.click()
-      player.playerRef.dispatchEvent(new Event('play'))
-      player.playerRef.dispatchEvent(new Event('timeupdate'))
-
-      // These should not have been called after cleanup
-      expect(player.playerRef.play).not.toHaveBeenCalled()
-      expect(player.currentTimeRef.textContent).toBe('00:00') // Time shouldn't update
-    })
+    player.db.isDisliked = vi.fn(() => false)
+    player.updateVoteButtonFill()
+    expect(player.likeOutlineSvgRef.classList.contains('hidden')).toBe(false)
+    expect(player.dislikeOutlineSvgRef.classList.contains('hidden')).toBe(false)
+    expect(player.likeFillSvgRef.classList.contains('hidden')).toBe(true)
+    expect(player.dislikeFillSvgRef.classList.contains('hidden')).toBe(true)
   })
 })

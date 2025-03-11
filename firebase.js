@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app'
-import { getDatabase } from 'firebase/database'
+import { connectDatabaseEmulator, getDatabase } from 'firebase/database'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBOM4Sb3h6aPfXCYWoOIz3GK_yWeX31AaA',
@@ -14,3 +14,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 export const db = getDatabase(app)
+
+if (import.meta.env.NODE_ENV === 'test') {
+  connectDatabaseEmulator(db, 'localhost', 9000)
+}

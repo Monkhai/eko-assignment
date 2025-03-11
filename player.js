@@ -6,25 +6,58 @@ import { storage } from './storage'
  * A video player controller that manages playback and UI state.
  * Handles play/pause functionality and time display updates.
  */
-class Player {
+export class Player {
+  /** @type {string} */
   videoName
+
+  /** @type {HTMLVideoElement} */
   playerRef
+
+  /** @type {HTMLButtonElement} */
   playButtonRef
+
+  /** @type {SVGSVGElement} */
   playSvgRef
+
+  /** @type {SVGSVGElement} */
   pauseSvgRef
+
+  /** @type {HTMLSpanElement} */
   currentTimeRef
+
+  /** @type {HTMLButtonElement} */
   likeButtonRef
+
+  /** @type {HTMLButtonElement} */
   dislikeButtonRef
+
+  /** @type {HTMLSpanElement} */
   likeCountRef
+
+  /** @type {HTMLSpanElement} */
   dislikeCountRef
+
+  /** @type {SVGSVGElement} */
   likeOutlineSvgRef
+
+  /** @type {SVGSVGElement} */
   likeFillSvgRef
+
+  /** @type {SVGSVGElement} */
   dislikeOutlineSvgRef
+
+  /** @type {SVGSVGElement} */
   dislikeFillSvgRef
+
+  /** @type {HTMLSpanElement} */
+  viewsCountRef
+
   /** @type {AbortController} */
   abortController
+
   /**  @type {DB} */
   db
+
   /** @type {{likes: number, dislikes: number, views: number}} */
   stats = initialStats
 
@@ -47,7 +80,7 @@ class Player {
     this.likeFillSvgRef = document.getElementById('like_svg_fill')
     this.dislikeOutlineSvgRef = document.getElementById('dislike_svg_outline')
     this.dislikeFillSvgRef = document.getElementById('dislike_svg_fill')
-
+    this.viewsCountRef = document.getElementById('views_count')
     // initialize the AbortController
     this.abortController = new AbortController()
     const signal = this.abortController.signal
@@ -123,7 +156,7 @@ class Player {
       this.updateVoteButtonFill()
     }
     if (stats.views !== this.stats.views) {
-      alert('handle views')
+      this.viewsCountRef.textContent = stats.views
     }
 
     this.stats = stats
@@ -189,9 +222,6 @@ if (typeof document !== 'undefined' && typeof window !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     player = new Player('video1')
   })
-
-  // added to allow jest to find Player during testing
-  window.Player = Player
 
   window.addEventListener('beforeunload', () => {
     if (!player) return
