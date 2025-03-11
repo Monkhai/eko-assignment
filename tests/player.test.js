@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, vi } from 'vitest'
-import { initialStats } from './db.js'
-import { Player } from './player.js'
+import { initialStats } from '../scripts/db.js'
+import { Player } from '../scripts/player.js'
 
 // test initial stats
 describe('Player', () => {

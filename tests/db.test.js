@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, vi } from 'vitest'
-import { DB } from './db.js'
-import { storage, Storage } from './storage.js'
-import { db } from './firebase.js'
 import { get, ref, remove } from 'firebase/database'
+import { beforeEach, describe, expect, vi } from 'vitest'
+import { DB } from '../scripts/db.js'
+import { storage } from '../scripts/storage.js'
+import { db } from '../firebase.js'
 
 describe('DB', () => {
   beforeEach(async () => {

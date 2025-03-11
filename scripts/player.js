@@ -1,5 +1,5 @@
 import { DB, initialStats } from './db'
-import { db } from './firebase'
+import { db } from '../firebase'
 import { storage } from './storage'
 
 /**
