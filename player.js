@@ -1,24 +1,24 @@
-// Initialize Firebase.
-// const app = firebase.initializeApp({
-//   databaseURL: 'DATABASE_URL_PLACEHOLDER',
-// })
-
-// // Initialize Realtime Database and get a reference to the service.
-// const database = firebase.database(app)
-
-/* TODO:
-    - use abort controller to remove all event listeners when unmounting
-    - make resuable by allowing client to provide ids
+/**
+ * A video player controller that manages playback and UI state.
+ * Handles play/pause functionality and time display updates.
  */
 class Player {
   /** @type {HTMLVideoElement | null} */
   playerRef
+  /** @type {HTMLButtonElement} */
   buttonRef
+  /** @type {HTMLElement} */
   playSvgRef
+  /** @type {HTMLElement} */
   pauseSvgRef
+  /** @type {HTMLElement} */
   currentTimeRef
+  /** @type {AbortController} */
   abortController
 
+  /**
+   * Initializes the player by setting up DOM references and event listeners
+   */
   constructor() {
     this.playerRef = document.getElementById('player')
     this.buttonRef = document.getElementById('play_button')
@@ -39,6 +39,9 @@ class Player {
     this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this), { signal })
   }
 
+  /*
+    Toggles video playback state between playing and paused
+   */
   togglePlaying() {
     if (!this.playerRef) return
     if (this.playerRef.paused) {
@@ -48,6 +51,9 @@ class Player {
     }
   }
 
+  /*
+    Updates the play/pause button UI based on video playback state
+   */
   updateButton() {
     if (!this.pauseSvgRef || !this.playSvgRef) return
     if (this.playerRef.paused) {
@@ -59,6 +65,9 @@ class Player {
     }
   }
 
+  /*
+    Updates the current time display with the video's progress
+   */
   updateCurrentTime() {
     const time = this.playerRef.currentTime
     const timeInSeconds = formatSecondsToTimestamp(Math.floor(time))
@@ -67,11 +76,19 @@ class Player {
     }
   }
 
+  /*
+    Removes all event listeners when the player is destroyed
+   */
   cleanup() {
     this.abortController.abort()
   }
 }
 
+/**
+ * Converts seconds into a MM:SS formatted string
+ * @param {number} seconds - The time in seconds to format
+ * @returns {string} Time formatted as "MM:SS"
+ */
 function formatSecondsToTimestamp(seconds) {
   const minutes = Math.floor(seconds / 60)
   const remainingSeconds = seconds % 60
@@ -80,6 +97,7 @@ function formatSecondsToTimestamp(seconds) {
   return `${paddedMinutes}:${paddedSeconds}`
 }
 
+// Initialize player when DOM is ready and clean up before page unload
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
   let player
   document.addEventListener('DOMContentLoaded', () => {
