@@ -9,28 +9,43 @@
 class VideoController {
   playerRef
   buttonRef
-  playing = true
+  playSvgRef
+  pauseSvgRef
 
-  constructor(playerId, buttonRefId) {
-    const playerRef = document.getElementById(playerId)
-    this.playerRef = playerRef
-    const buttonRef = document.getElementById(buttonRefId)
-    this.buttonRef = buttonRef
+  constructor() {
+    this.playerRef = document.getElementById('player')
+    this.buttonRef = document.getElementById('playPause')
+    this.playSvgRef = document.getElementById('play_svg')
+    this.pauseSvgRef = document.getElementById('pause_svg')
+
+    //add play/pause functionality to the button
     this.buttonRef.addEventListener('click', this.togglePlaying.bind(this))
-  }
 
-  togglePlayingState() {
-    this.playing = !this.playing
+    // Listen to video events to update UI accordingly
+    this.playerRef.addEventListener('play', this.updateButton.bind(this))
+    this.playerRef.addEventListener('pause', this.updateButton.bind(this))
+    this.playerRef.addEventListener('ended', this.updateButton.bind(this))
   }
 
   togglePlaying() {
     if (!this.playerRef) return
-    if (this.playing) {
-      this.playerRef.pause()
-    } else {
+    if (this.playerRef.paused) {
       this.playerRef.play()
+    } else {
+      this.playerRef.pause()
     }
-    this.togglePlayingState()
+  }
+
+  updateButton() {
+    if (this.playerRef.paused) {
+      //   this.buttonRef.textContent = 'Play'
+      this.playSvgRef.classList.remove('hidden')
+      this.pauseSvgRef.classList.add('hidden')
+    } else {
+      // this.buttonRef.textContent = 'Pause'
+      this.pauseSvgRef.classList.remove('hidden')
+      this.playSvgRef.classList.add('hidden')
+    }
   }
 }
 

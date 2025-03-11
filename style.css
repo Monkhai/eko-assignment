@@ -36,8 +36,19 @@ video {
   justify-content: space-between;
 }
 
+.play_button {
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .social {
   display: block;
   width: 24rem;
   margin: 1rem auto;
+}
+
+.hidden {
+  display: none;
 }
