@@ -6,20 +6,24 @@
 // // Initialize Realtime Database and get a reference to the service.
 // const database = firebase.database(app)
 
-// TODO: use abort controller to remove all event listeners when unmounting
+/* TODO:
+    - use abort controller to remove all event listeners when unmounting
+    - make resuable by allowing client to provide ids
+ */
 class Player {
   /** @type {HTMLVideoElement | null} */
   playerRef
   buttonRef
   playSvgRef
   pauseSvgRef
-  duration
+  currentTimeRef
 
   constructor() {
     this.playerRef = document.getElementById('player')
     this.buttonRef = document.getElementById('play_button')
     this.playSvgRef = document.getElementById('play_svg')
     this.pauseSvgRef = document.getElementById('pause_svg')
+    this.currentTimeRef = document.getElementById('current_time')
 
     //add play/pause functionality to the button
     this.buttonRef.addEventListener('click', this.togglePlaying.bind(this))
@@ -28,10 +32,7 @@ class Player {
     this.playerRef.addEventListener('play', this.updateButton.bind(this))
     this.playerRef.addEventListener('pause', this.updateButton.bind(this))
     this.playerRef.addEventListener('ended', this.updateButton.bind(this))
-    this.duration = this.playerRef.duration
-    this.playerRef.ontimeupdate = ev => {
-      console.log(this.playerRef.currentTime)
-    }
+    this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this))
   }
 
   togglePlaying() {
@@ -44,18 +45,38 @@ class Player {
   }
 
   updateButton() {
+    if (!this.pauseSvgRef || !this.playSvgRef) return
     if (this.playerRef.paused) {
-      //   this.buttonRef.textContent = 'Play'
       this.playSvgRef.classList.remove('hidden')
       this.pauseSvgRef.classList.add('hidden')
     } else {
-      // this.buttonRef.textContent = 'Pause'
       this.pauseSvgRef.classList.remove('hidden')
       this.playSvgRef.classList.add('hidden')
     }
   }
+
+  updateCurrentTime() {
+    const time = this.playerRef.currentTime
+    const timeInSeconds = formatSecondsToTimestamp(Math.round(time))
+    if (this.currentTimeRef.textContent !== timeInSeconds) {
+      this.currentTimeRef.textContent = timeInSeconds
+    }
+  }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  new Player()
-})
+function formatSecondsToTimestamp(seconds) {
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  const paddedSeconds = remainingSeconds.toString().padStart(2, '0')
+  const paddedMinutes = minutes.toString().padStart(2, '0')
+  return `${paddedMinutes}:${paddedSeconds}`
+}
+
+if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    new Player()
+  })
+
+  // added to allow jest to find Player during testing
+  window.Player = Player
+}
