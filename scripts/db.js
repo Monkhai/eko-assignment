@@ -9,20 +9,20 @@ export const initialStats = {
 
 export class DB {
   /** @type {AbortSignal} */
-  #abortSignal
+  abortSignal
   /** @type {Database} */
-  #db
+  db
   /** @type {Storage} */
-  #storage
+  storage
   /** @type {(name: string) => string} */
-  #getStatsPath = name => `videos/${name}/stats`
+  getStatsPath = name => `videos/${name}/stats`
   /** @type {(name: string) => string} */
-  #getStorageKey = name => `video_${name}`
+  getStorageKey = name => `video_${name}`
 
   /**
    * @param {Database} db
    * @param {Storage} storage
-   * @param {AbortSignal} abortSignal
+   * @param {AbortSignal} signal
    */
   constructor(db, storage, signal) {
     if (!db) {
@@ -34,29 +34,29 @@ export class DB {
     if (!signal) {
       throw new Error('signal is required')
     }
-    this.#abortSignal = signal
-    this.#db = db
-    this.#storage = storage
+    this.abortSignal = signal
+    this.db = db
+    this.storage = storage
   }
 
   /**
    * @param {string} name
    */
   async handleLikeVideo(name) {
-    const baseKey = this.#getStorageKey(name)
-    const userLiked = this.#storage.get(`${baseKey}_likes`)
-    const userDisliked = this.#storage.get(`${baseKey}_dislikes`)
+    const baseKey = this.getStorageKey(name)
+    const userLiked = this.storage.get(`${baseKey}_likes`)
+    const userDisliked = this.storage.get(`${baseKey}_dislikes`)
 
     // If the user disliked the video, remove the dislike before adding a like
     if (userDisliked) {
-      await this.#removeDislike(name)
+      await this.removeDislike(name)
     }
 
     // if the user already liked the video, remove the like
     if (userLiked) {
-      await this.#removeLike(name)
+      await this.removeLike(name)
     } else {
-      await this.#addLike(name)
+      await this.addLike(name)
     }
   }
 
@@ -64,20 +64,20 @@ export class DB {
    * @param {string} name
    */
   async handleDislikeVideo(name) {
-    const baseKey = this.#getStorageKey(name)
-    const userLiked = this.#storage.get(`${baseKey}_likes`)
-    const userDisliked = this.#storage.get(`${baseKey}_dislikes`)
+    const baseKey = this.getStorageKey(name)
+    const userLiked = this.storage.get(`${baseKey}_likes`)
+    const userDisliked = this.storage.get(`${baseKey}_dislikes`)
 
     // if the user already liked the video, remove the like before adding a dislike
     if (userLiked) {
-      await this.#removeLike(name)
+      await this.removeLike(name)
     }
 
     // if the user already disliked the video, remove the dislike before adding a new one
     if (userDisliked) {
-      await this.#removeDislike(name)
+      await this.removeDislike(name)
     } else {
-      await this.#addDislike(name)
+      await this.addDislike(name)
     }
   }
 
@@ -85,40 +85,40 @@ export class DB {
    * @private
    * @param {string} name
    */
-  async #addLike(name) {
-    const baseKey = this.#getStorageKey(name)
-    this.#storage.set(`${baseKey}_likes`, true)
-    await this.#updateStat(name, 'likes', 1)
+  async addLike(name) {
+    const baseKey = this.getStorageKey(name)
+    this.storage.set(`${baseKey}_likes`, true)
+    await this.updateStat(name, 'likes', 1)
   }
 
   /**
    * @private
    * @param {string} name
    */
-  async #removeLike(name) {
-    const baseKey = this.#getStorageKey(name)
-    this.#storage.remove(`${baseKey}_likes`)
-    await this.#updateStat(name, 'likes', -1)
+  async removeLike(name) {
+    const baseKey = this.getStorageKey(name)
+    this.storage.remove(`${baseKey}_likes`)
+    await this.updateStat(name, 'likes', -1)
   }
 
   /**
    * @private
    * @param {string} name
    */
-  async #addDislike(name) {
-    const baseKey = this.#getStorageKey(name)
-    this.#storage.set(`${baseKey}_dislikes`, true)
-    await this.#updateStat(name, 'dislikes', 1)
+  async addDislike(name) {
+    const baseKey = this.getStorageKey(name)
+    this.storage.set(`${baseKey}_dislikes`, true)
+    await this.updateStat(name, 'dislikes', 1)
   }
 
   /**
    * @private
    * @param {string} name
    */
-  async #removeDislike(name) {
-    const baseKey = this.#getStorageKey(name)
-    this.#storage.remove(`${baseKey}_dislikes`)
-    await this.#updateStat(name, 'dislikes', -1)
+  async removeDislike(name) {
+    const baseKey = this.getStorageKey(name)
+    this.storage.remove(`${baseKey}_dislikes`)
+    await this.updateStat(name, 'dislikes', -1)
   }
 
   /**
@@ -127,9 +127,9 @@ export class DB {
    * @param {string} statName
    * @param {number} delta
    */
-  async #updateStat(name, statName, delta) {
-    const statsPath = this.#getStatsPath(name)
-    const videoRef = ref(this.#db, statsPath)
+  async updateStat(name, statName, delta) {
+    const statsPath = this.getStatsPath(name)
+    const videoRef = ref(this.db, statsPath)
     return runTransaction(videoRef, currentStats => {
       if (!currentStats) {
         return { ...initialStats, [statName]: Math.max(0, delta) }
@@ -149,7 +149,7 @@ export class DB {
    * @returns {boolean}
    */
   isLiked(name) {
-    return this.#storage.get(`${this.#getStorageKey(name)}_likes`)
+    return this.storage.get(`${this.getStorageKey(name)}_likes`)
   }
 
   /**
@@ -157,16 +157,16 @@ export class DB {
    * @returns {boolean}
    */
   isDisliked(name) {
-    return this.#storage.get(`${this.#getStorageKey(name)}_dislikes`)
+    return this.storage.get(`${this.getStorageKey(name)}_dislikes`)
   }
 
   /**
    * @param {string} name
    */
   async handleUpdateViews(name) {
-    const baseKey = this.#getStorageKey(name)
-    this.#storage.set(`${baseKey}_views`, true)
-    await this.#updateStat(name, 'views', 1)
+    const baseKey = this.getStorageKey(name)
+    this.storage.set(`${baseKey}_views`, true)
+    await this.updateStat(name, 'views', 1)
   }
 
   /**
@@ -174,14 +174,14 @@ export class DB {
    * @param {({views: number, likes: number, dislikes: number}) => void} callback
    */
   listenToStatUpdates(name, callback) {
-    const statsPath = this.#getStatsPath(name)
-    const videoRef = ref(this.#db, statsPath)
+    const statsPath = this.getStatsPath(name)
+    const videoRef = ref(this.db, statsPath)
     const unsubscribe = onValue(videoRef, snapshot => {
       const values = snapshot.val()
       callback(values || initialStats)
     })
 
-    this.#abortSignal.addEventListener('abort', () => {
+    this.abortSignal.addEventListener('abort', () => {
       unsubscribe()
     })
   }

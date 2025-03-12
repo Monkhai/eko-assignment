@@ -1,14 +1,14 @@
 export class Storage {
   /** @type {Storage} */
-  static #instance
+  static instance
 
   /**
    @type {Map<string, string>}
    */
-  #cache = new Map()
+  cache = new Map()
 
   constructor() {
-    if (Storage.#instance) {
+    if (Storage.instance) {
       throw new Error('Use Storage.getInstance() instead of new Storage()')
     }
   }
@@ -17,21 +17,21 @@ export class Storage {
    * @returns {Storage}
    */
   static getInstance() {
-    if (!Storage.#instance) {
-      Storage.#instance = new Storage()
+    if (!Storage.instance) {
+      Storage.instance = new Storage()
     }
-    return Storage.#instance
+    return Storage.instance
   }
   /**
    * @param {string} key
    * @returns {string}
    */
   get(key) {
-    if (this.#cache.has(key)) {
-      return this.#cache.get(key)
+    if (this.cache.has(key)) {
+      return this.cache.get(key)
     }
     const value = localStorage.getItem(key)
-    this.#cache.set(key, value)
+    this.cache.set(key, value)
     return value
   }
 
@@ -40,7 +40,7 @@ export class Storage {
    * @param {boolean} value
    */
   set(key, value) {
-    this.#cache.set(key, value)
+    this.cache.set(key, value)
     localStorage.setItem(key, value)
   }
 
@@ -48,7 +48,7 @@ export class Storage {
    * @param {string} key
    */
   remove(key) {
-    this.#cache.delete(key)
+    this.cache.delete(key)
     localStorage.removeItem(key)
   }
 }
