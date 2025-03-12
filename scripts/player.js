@@ -1,7 +1,7 @@
-import { formatSecondsToTimestamp } from './helpers'
 import { DB, initialStats } from './db'
 import { db } from '../firebase'
 import { storage } from './storage'
+import { Controls } from './controls'
 
 const THRESHOLD_CONSTANT = 0.25
 
@@ -42,9 +42,6 @@ export class Player {
   /** @type {SVGSVGElement} */
   pauseSvgRef
 
-  /** @type {HTMLSpanElement} */
-  currentTimeRef
-
   /** @type {HTMLButtonElement} */
   likeButtonRef
 
@@ -72,20 +69,14 @@ export class Player {
   /** @type {HTMLSpanElement} */
   viewsCountRef
 
-  /** @type {HTMLDivElement} */
-  progressBarRef
-
-  /** @type {HTMLDivElement} */
-  progressBarFillRef
-
-  /** @type {HTMLSpanElement} */
-  progressBarThumbRef
-
   /** @type {AbortController} */
   abortController
 
   /**  @type {DB} */
   db
+
+  /** @type {Controls} */
+  controls
 
   /** @type {{likes: number, dislikes: number, views: number}} */
   stats = initialStats
@@ -99,10 +90,7 @@ export class Player {
   constructor(videoName) {
     this.videoName = videoName
     this.playerRef = document.getElementById('player')
-    this.playButtonRef = document.getElementById('play_button')
-    this.playSvgRef = document.getElementById('play_svg')
-    this.pauseSvgRef = document.getElementById('pause_svg')
-    this.currentTimeRef = document.getElementById('current_time')
+
     this.likeButtonRef = document.getElementById('like_button')
     this.dislikeButtonRef = document.getElementById('dislike_button')
     this.likeCountRef = document.getElementById('like_count')
@@ -112,31 +100,18 @@ export class Player {
     this.dislikeOutlineSvgRef = document.getElementById('dislike_svg_outline')
     this.dislikeFillSvgRef = document.getElementById('dislike_svg_fill')
     this.viewsCountRef = document.getElementById('views_count')
-    this.progressBarRef = document.getElementById('progress_bar')
-    this.progressBarFillRef = document.getElementById('progress_bar_fill')
-    this.progressBarThumbRef = document.getElementById('progress_bar_thumb')
     this.abortController = new AbortController()
+    this.controls = new Controls(this.playerRef, this.abortController.signal)
 
     const signal = this.abortController.signal
-
     // play/pause functionality
-    this.playButtonRef.addEventListener('click', this.togglePlaying.bind(this), { signal })
 
     // like/dislike functionality
     this.likeButtonRef.addEventListener('click', this.likeVideo.bind(this), { signal })
     this.dislikeButtonRef.addEventListener('click', this.dislikeVideo.bind(this), { signal })
 
     // video events
-    this.playerRef.addEventListener('play', this.updateButton.bind(this), { signal })
-    this.playerRef.addEventListener('pause', this.updateButton.bind(this), { signal })
-    this.playerRef.addEventListener('ended', this.updateButton.bind(this), { signal })
     this.playerRef.addEventListener('ended', this.resetViewState.bind(this), { signal })
-    this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this), { signal })
-
-    // progress bar events
-    this.progressBarThumbRef.addEventListener('mousedown', this.handleMouseDown.bind(this), { signal })
-    document.addEventListener('mousemove', this.handleMouseMove.bind(this), { signal })
-    document.addEventListener('mouseup', this.handleMouseUp.bind(this), { signal })
 
     // set the view threshold to half of the video duration
     this.viewThreshold = this.playerRef.duration * THRESHOLD_CONSTANT
@@ -145,13 +120,6 @@ export class Player {
     // create a realtime connection to update UI when database changes
     this.db.listenToStatUpdates('video1', this.updateStats.bind(this))
 
-    // initialize the vote button fill
-
-    // bind the updateProgressBar function to the player
-    this.updateProgressBar = this.updateProgressBar.bind(this)
-
-    // update the progress bar on page load (since video is auto play)
-    requestAnimationFrame(this.updateProgressBar)
     this.updateVoteButtonFill()
   }
 
@@ -159,101 +127,6 @@ export class Player {
     this.hasUpdatedView = false
     this.accumulatedWatchTime = 0
     this.lastUpdateTime = 0
-  }
-
-  /*
-    Toggles video playback state between playing and paused
-   */
-  togglePlaying() {
-    if (!this.playerRef) return
-    if (this.playerRef.paused) {
-      this.playerRef.play()
-      requestAnimationFrame(this.updateProgressBar)
-    } else {
-      this.playerRef.pause()
-    }
-  }
-
-  /*
-    Updates the play/pause button UI based on video playback state
-   */
-  updateButton() {
-    if (!this.playerRef.paused) {
-      requestAnimationFrame(this.updateProgressBar)
-    }
-    if (!this.pauseSvgRef || !this.playSvgRef) return
-    if (this.playerRef.paused) {
-      this.playSvgRef.classList.remove('hidden')
-      this.pauseSvgRef.classList.add('hidden')
-    } else {
-      this.pauseSvgRef.classList.remove('hidden')
-      this.playSvgRef.classList.add('hidden')
-    }
-  }
-
-  handleMouseDown() {
-    this.playerRef.pause()
-    this.dragging = true
-  }
-
-  /**
-   *
-   * @param {MouseEvent} e
-   */
-  handleMouseMove(e) {
-    if (!this.dragging) return
-    const rect = this.progressBarRef.getBoundingClientRect()
-    let position = (e.clientX - rect.left) / rect.width
-    position = Math.max(0, Math.min(position, 1))
-
-    const precent = Math.round(position * 100)
-    this.progressBarFillRef.style.width = `${precent}%`
-
-    const currentTime = this.playerRef.duration * position
-    this.playerRef.currentTime = currentTime
-  }
-
-  handleMouseUp() {
-    if (this.dragging) this.dragging = false
-  }
-
-  /*
-    Updates the current time display with the video's progress
-   */
-  updateCurrentTime() {
-    const currentTime = this.playerRef.currentTime
-    const timeInSeconds = formatSecondsToTimestamp(Math.floor(currentTime))
-    if (this.currentTimeRef.textContent !== timeInSeconds) {
-      this.currentTimeRef.textContent = timeInSeconds
-    }
-
-    // Calculate the time watched since the last update
-    const timeWatched = currentTime - this.lastUpdateTime
-    if (timeWatched > 0) {
-      this.accumulatedWatchTime += timeWatched
-      this.lastUpdateTime = currentTime
-    }
-
-    // Update the view only if the accumulated watch time exceeds the threshold
-    if (this.accumulatedWatchTime >= this.viewThreshold && !this.hasUpdatedView) {
-      this.db.handleUpdateViews(this.videoName)
-      this.hasUpdatedView = true // Set the flag to true after updating
-    }
-  }
-
-  /*
-    Updates the progress bar using requestAnimationFrame for smooth animations
-   */
-  updateProgressBar() {
-    if (this.playerRef.paused) return
-
-    const currentTime = this.playerRef.currentTime
-    const duration = this.playerRef.duration
-    const progressPercentage = (currentTime / duration) * 100
-    // Update the range input value
-    this.progressBarFillRef.style.width = `${progressPercentage}%`
-    // Continue updating the progress bar
-    requestAnimationFrame(this.updateProgressBar)
   }
 
   /**

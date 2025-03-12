@@ -16,6 +16,9 @@ describe('Player', () => {
     <span id="like_count"></span>
     <button id="dislike_button"></button>
     <span id="dislike_count"></span>
+    <div id="progress_bar"></div>
+    <div id="progress_bar_fill"></div>
+    <span id="progress_bar_thumb"></span>
     <svg id="like_svg_outline" class="hidden"></svg>
     <svg id="like_svg_fill" class="hidden"></svg>
     <svg id="dislike_svg_outline" class="hidden"></svg>
@@ -28,10 +31,6 @@ describe('Player', () => {
     const player = new Player('test-video')
     expect(player.stats).toEqual(initialStats)
     expect(player.playerRef).toBeDefined()
-    expect(player.playButtonRef).toBeDefined()
-    expect(player.playSvgRef).toBeDefined()
-    expect(player.pauseSvgRef).toBeDefined()
-    expect(player.currentTimeRef).toBeDefined()
     expect(player.likeButtonRef).toBeDefined()
     expect(player.likeCountRef).toBeDefined()
     expect(player.dislikeButtonRef).toBeDefined()
@@ -41,73 +40,10 @@ describe('Player', () => {
     expect(player.dislikeOutlineSvgRef).toBeDefined()
     expect(player.dislikeFillSvgRef).toBeDefined()
     expect(player.viewsCountRef).toBeDefined()
-    expect(player.progressBarRef).toBeDefined()
-    expect(player.progressBarThumbRef).toBeDefined()
     expect(player.abortController).toBeDefined()
     expect(player.db).toBeDefined()
     expect(player.videoName).toBeDefined()
     expect(player.viewThreshold).toBeDefined()
-  })
-
-  test('player.togglePlaying()', () => {
-    const player = new Player('test-video')
-    const videoElement = player.playerRef
-
-    // Mock play and pause methods
-    videoElement.play = vi.fn(() => {
-      Object.defineProperty(videoElement, 'paused', { value: false, configurable: true })
-    })
-    videoElement.pause = vi.fn(() => {
-      Object.defineProperty(videoElement, 'paused', { value: true, configurable: true })
-    })
-
-    // Initially, the video should be paused
-    Object.defineProperty(videoElement, 'paused', { value: false, configurable: true })
-    expect(videoElement.paused).toBe(false)
-
-    // Simulate play
-    player.togglePlaying()
-    expect(videoElement.pause).toHaveBeenCalled()
-    expect(videoElement.paused).toBe(true)
-
-    // Simulate play
-    player.togglePlaying()
-    expect(videoElement.play).toHaveBeenCalled()
-    expect(videoElement.paused).toBe(false)
-  })
-
-  test('player.updateButton()', () => {
-    const player = new Player('test-video')
-    const videoElement = player.playerRef
-    // initially the video should be paused
-    Object.defineProperty(videoElement, 'paused', { value: false, configurable: true })
-    expect(videoElement.paused).toBe(false)
-
-    expect(player.playSvgRef.classList.contains('hidden')).toBe(true)
-    expect(player.pauseSvgRef.classList.contains('hidden')).toBe(false)
-
-    // simulate pause
-    Object.defineProperty(videoElement, 'paused', { value: true, configurable: true })
-    expect(videoElement.paused).toBe(true)
-
-    player.playerRef.dispatchEvent(new Event('pause'))
-    expect(player.playSvgRef.classList.contains('hidden')).toBe(false)
-    expect(player.pauseSvgRef.classList.contains('hidden')).toBe(true)
-
-    // simulate play
-    Object.defineProperty(videoElement, 'paused', { value: false, configurable: true })
-    expect(videoElement.paused).toBe(false)
-
-    player.playerRef.dispatchEvent(new Event('play'))
-    expect(player.playSvgRef.classList.contains('hidden')).toBe(true)
-    expect(player.pauseSvgRef.classList.contains('hidden')).toBe(false)
-  })
-
-  test('player.updateCurrentTime()', () => {
-    const player = new Player('test-video')
-    player.playerRef.currentTime = 4.37
-    player.updateCurrentTime()
-    expect(player.currentTimeRef.textContent).toBe('00:04')
   })
 
   test('player.updateStats()', () => {
