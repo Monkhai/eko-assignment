@@ -29,7 +29,7 @@ firebase login
 then start the emulator:
 
 ```bash
-firebase emulators:start --only firestore
+cd firebase-emulator && firebase emulators:start --only firestore
 ```
 
 then run the tests:
