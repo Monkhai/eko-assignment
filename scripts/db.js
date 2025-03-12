@@ -25,15 +25,6 @@ export class DB {
    * @param {AbortSignal} signal
    */
   constructor(db, storage, signal) {
-    if (!db) {
-      throw new Error('db is required')
-    }
-    if (!storage) {
-      throw new Error('storage is required')
-    }
-    if (!signal) {
-      throw new Error('signal is required')
-    }
     this.abortSignal = signal
     this.db = db
     this.storage = storage
