@@ -134,34 +134,9 @@ export class Player {
     this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this), { signal })
 
     // progress bar events
-    this.progressBarThumbRef.addEventListener(
-      'mousedown',
-      () => {
-        this.playerRef.pause()
-        this.dragging = true
-      },
-      { signal }
-    )
-    document.addEventListener(
-      'mousemove',
-      e => {
-        if (!this.dragging) return
-        const rect = this.progressBarRef.getBoundingClientRect()
-        let position = (e.clientX - rect.left) / rect.width
-        position = Math.max(0, Math.min(position, 1))
-
-        const precent = Math.round(position * 100)
-        this.progressBarFillRef.style.width = `${precent}%`
-      },
-      { signal }
-    )
-    document.addEventListener(
-      'mouseup',
-      () => {
-        if (this.dragging) this.dragging = false
-      },
-      { signal }
-    )
+    this.progressBarThumbRef.addEventListener('mousedown', this.handleMouseDown.bind(this), { signal })
+    document.addEventListener('mousemove', this.handleMouseMove.bind(this), { signal })
+    document.addEventListener('mouseup', this.handleMouseUp.bind(this), { signal })
 
     // set the view threshold to half of the video duration
     this.viewThreshold = this.playerRef.duration * THRESHOLD_CONSTANT
@@ -214,6 +189,32 @@ export class Player {
       this.pauseSvgRef.classList.remove('hidden')
       this.playSvgRef.classList.add('hidden')
     }
+  }
+
+  handleMouseDown() {
+    this.playerRef.pause()
+    this.dragging = true
+  }
+
+  /**
+   *
+   * @param {MouseEvent} e
+   */
+  handleMouseMove(e) {
+    if (!this.dragging) return
+    const rect = this.progressBarRef.getBoundingClientRect()
+    let position = (e.clientX - rect.left) / rect.width
+    position = Math.max(0, Math.min(position, 1))
+
+    const precent = Math.round(position * 100)
+    this.progressBarFillRef.style.width = `${precent}%`
+
+    const currentTime = this.playerRef.duration * position
+    this.playerRef.currentTime = currentTime
+  }
+
+  handleMouseUp() {
+    if (this.dragging) this.dragging = false
   }
 
   /*
