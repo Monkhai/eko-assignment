@@ -41,6 +41,8 @@ describe('Player', () => {
     expect(player.dislikeOutlineSvgRef).toBeDefined()
     expect(player.dislikeFillSvgRef).toBeDefined()
     expect(player.viewsCountRef).toBeDefined()
+    expect(player.progressBarRef).toBeDefined()
+    expect(player.progressBarThumbRef).toBeDefined()
     expect(player.abortController).toBeDefined()
     expect(player.db).toBeDefined()
     expect(player.videoName).toBeDefined()

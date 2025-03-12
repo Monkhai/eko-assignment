@@ -1,3 +1,4 @@
+import { formatSecondsToTimestamp } from './helpers'
 import { DB, initialStats } from './db'
 import { db } from '../firebase'
 import { storage } from './storage'
@@ -71,8 +72,14 @@ export class Player {
   /** @type {HTMLSpanElement} */
   viewsCountRef
 
-  /** @type {HTMLProgressElement} */
+  /** @type {HTMLDivElement} */
   progressBarRef
+
+  /** @type {HTMLDivElement} */
+  progressBarFillRef
+
+  /** @type {HTMLSpanElement} */
+  progressBarThumbRef
 
   /** @type {AbortController} */
   abortController
@@ -83,6 +90,8 @@ export class Player {
   /** @type {{likes: number, dislikes: number, views: number}} */
   stats = initialStats
 
+  /** @type {boolean} */
+  dragging = false
   //------------------------------------------------------------
   /**
    * @param {string} videoName
@@ -104,9 +113,12 @@ export class Player {
     this.dislikeFillSvgRef = document.getElementById('dislike_svg_fill')
     this.viewsCountRef = document.getElementById('views_count')
     this.progressBarRef = document.getElementById('progress_bar')
-    // initialize the AbortController
+    this.progressBarFillRef = document.getElementById('progress_bar_fill')
+    this.progressBarThumbRef = document.getElementById('progress_bar_thumb')
     this.abortController = new AbortController()
+
     const signal = this.abortController.signal
+
     // play/pause functionality
     this.playButtonRef.addEventListener('click', this.togglePlaying.bind(this), { signal })
 
@@ -121,13 +133,38 @@ export class Player {
     this.playerRef.addEventListener('ended', this.resetViewState.bind(this), { signal })
     this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this), { signal })
 
-    // update the progress bar
-    this.progressBarRef.addEventListener('input', this.updateVideoCurrentTime.bind(this), { signal })
+    // progress bar events
+    this.progressBarThumbRef.addEventListener(
+      'mousedown',
+      () => {
+        this.playerRef.pause()
+        this.dragging = true
+      },
+      { signal }
+    )
+    document.addEventListener(
+      'mousemove',
+      e => {
+        if (!this.dragging) return
+        const rect = this.progressBarRef.getBoundingClientRect()
+        let position = (e.clientX - rect.left) / rect.width
+        position = Math.max(0, Math.min(position, 1))
+
+        const precent = Math.round(position * 100)
+        this.progressBarFillRef.style.width = `${precent}%`
+      },
+      { signal }
+    )
+    document.addEventListener(
+      'mouseup',
+      () => {
+        if (this.dragging) this.dragging = false
+      },
+      { signal }
+    )
 
     // set the view threshold to half of the video duration
     this.viewThreshold = this.playerRef.duration * THRESHOLD_CONSTANT
-    this.progressBarRef.max = this.playerRef.duration
-
     // setup db
     this.db = new DB(this.abortController, db, storage)
     // create a realtime connection to update UI when database changes
@@ -141,8 +178,6 @@ export class Player {
     // update the progress bar on page load (since video is auto play)
     requestAnimationFrame(this.updateProgressBar)
     this.updateVoteButtonFill()
-    // Initialize the progress bar max to 100 for percentage-based range
-    this.progressBarRef.max = 100
   }
 
   resetViewState() {
@@ -205,19 +240,6 @@ export class Player {
     }
   }
 
-  /**
-   * Updates the video current time based on the progress bar value
-   * @param {Event} e - The event object
-   */
-  updateVideoCurrentTime(e) {
-    if (!this.playerRef.paused) {
-      this.playerRef.pause()
-    }
-    const denormalizedValue = e.target.value
-    const normalizedValue = denormalizedValue / 100
-    this.playerRef.currentTime = normalizedValue * this.playerRef.duration
-  }
-
   /*
     Updates the progress bar using requestAnimationFrame for smooth animations
    */
@@ -227,13 +249,8 @@ export class Player {
     const currentTime = this.playerRef.currentTime
     const duration = this.playerRef.duration
     const progressPercentage = (currentTime / duration) * 100
-
     // Update the range input value
-    this.progressBarRef.value = progressPercentage
-
-    // Update the CSS variable for styling the track
-    document.documentElement.style.setProperty('--progress', `${progressPercentage}%`)
-
+    this.progressBarFillRef.style.width = `${progressPercentage}%`
     // Continue updating the progress bar
     requestAnimationFrame(this.updateProgressBar)
   }
@@ -296,19 +313,6 @@ export class Player {
   cleanup() {
     this.abortController.abort()
   }
-}
-
-/**
- * Converts seconds into a MM:SS formatted string
- * @param {number} seconds - The time in seconds to format
- * @returns {string} Time formatted as "MM:SS"
- */
-function formatSecondsToTimestamp(seconds) {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  const paddedSeconds = remainingSeconds.toString().padStart(2, '0')
-  const paddedMinutes = minutes.toString().padStart(2, '0')
-  return `${paddedMinutes}:${paddedSeconds}`
 }
 
 // Initialize player when DOM is ready and clean up before page unload
