@@ -88,6 +88,7 @@ export class Stats {
     this.likeButtonRef.addEventListener('click', this.likeVideo.bind(this), { signal })
     this.dislikeButtonRef.addEventListener('click', this.dislikeVideo.bind(this), { signal })
     this.playerRef.addEventListener('ended', this.resetViewState.bind(this), { signal })
+    this.playerRef.addEventListener('timeupdate', this.handleTimeUpdate.bind(this), { signal })
 
     // create a realtime connection to update UI when database changes
     this.db.listenToStatUpdates('video1', this.updateStats.bind(this))
@@ -150,6 +151,22 @@ export class Stats {
       // if the user has not disliked the video, show the outline svg
       this.dislikeOutlineSvgRef.classList.remove('hidden')
       this.dislikeFillSvgRef.classList.add('hidden')
+    }
+  }
+
+  handleTimeUpdate() {
+    // Calculate the time watched since the last update
+    const currentTime = this.playerRef.currentTime
+    const timeWatched = currentTime - this.lastUpdateTime
+    if (timeWatched > 0) {
+      this.accumulatedWatchTime += timeWatched
+      this.lastUpdateTime = currentTime
+    }
+
+    // Update the view only if the accumulated watch time exceeds the threshold
+    if (this.accumulatedWatchTime >= this.viewThreshold && !this.hasUpdatedView) {
+      this.db.handleUpdateViews(this.videoName)
+      this.hasUpdatedView = true // Set the flag to true after updating
     }
   }
 }
