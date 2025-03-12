@@ -1,3 +1,7 @@
 16:59:37.852 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
 16:59:37.929 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
 17:00:35.744 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO com.firebase.core.namespace.NamespaceActor - eko-homework-assignment-5-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 53ms, init: 0ms
+12:56:16.208 [Thread-0] INFO com.firebase.server.forge.App$ - Attempting graceful shutdown.
+12:56:16.215 [NamespaceSystem-akka.actor.default-dispatcher-89] INFO com.firebase.core.namespace.Terminator$Terminator - 1 actors left to terminate: eko-homework-assignment-5-default-rtdb
+12:56:16.219 [NamespaceSystem-akka.actor.default-dispatcher-90] INFO com.firebase.core.namespace.NamespaceActor - stopped namespace actor for eko-homework-assignment-5-default-rtdb
+12:56:16.221 [Thread-0] INFO com.firebase.server.forge.App$ - Graceful shutdown complete.
