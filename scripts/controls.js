@@ -47,7 +47,7 @@ export class Controls {
     this.playerRef.addEventListener('play', this.updatePlayButton.bind(this), { signal })
     this.playerRef.addEventListener('pause', this.updatePlayButton.bind(this), { signal })
     this.playerRef.addEventListener('ended', this.updatePlayButton.bind(this), { signal })
-    this.playerRef.addEventListener('timeupdate', this.updateCurrentTime.bind(this), { signal })
+    this.playerRef.addEventListener('timeupdate', this.handleTimeUpdate.bind(this), { signal })
 
     // PROGRESS BAR EVENTS
     this.progressBarThumbRef.addEventListener('mousedown', this.handleMouseDown.bind(this), { signal })
@@ -141,24 +141,11 @@ export class Controls {
   /*
     Updates the current time display with the video's progress
    */
-  updateCurrentTime() {
+  handleTimeUpdate() {
     const currentTime = this.playerRef.currentTime
     const timeInSeconds = formatSecondsToTimestamp(Math.floor(currentTime))
     if (this.currentTimeRef.textContent !== timeInSeconds) {
       this.currentTimeRef.textContent = timeInSeconds
-    }
-
-    // Calculate the time watched since the last update
-    const timeWatched = currentTime - this.lastUpdateTime
-    if (timeWatched > 0) {
-      this.accumulatedWatchTime += timeWatched
-      this.lastUpdateTime = currentTime
-    }
-
-    // Update the view only if the accumulated watch time exceeds the threshold
-    if (this.accumulatedWatchTime >= this.viewThreshold && !this.hasUpdatedView) {
-      this.db.handleUpdateViews(this.videoName)
-      this.hasUpdatedView = true // Set the flag to true after updating
     }
   }
 }

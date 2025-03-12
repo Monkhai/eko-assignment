@@ -8,8 +8,8 @@ export const initialStats = {
 }
 
 export class DB {
-  /** @type {AbortController} */
-  #abortController
+  /** @type {AbortSignal} */
+  #abortSignal
   /** @type {Database} */
   #db
   /** @type {Storage} */
@@ -20,21 +20,21 @@ export class DB {
   #getStorageKey = name => `video_${name}`
 
   /**
-   * @param {AbortController} abortController
    * @param {Database} db
    * @param {Storage} storage
+   * @param {AbortSignal} abortSignal
    */
-  constructor(abortController, db, storage) {
+  constructor(db, storage, signal) {
     if (!db) {
       throw new Error('db is required')
     }
     if (!storage) {
       throw new Error('storage is required')
     }
-    if (!abortController) {
-      throw new Error('abortController is required')
+    if (!signal) {
+      throw new Error('signal is required')
     }
-    this.#abortController = abortController
+    this.#abortSignal = signal
     this.#db = db
     this.#storage = storage
   }
@@ -181,7 +181,7 @@ export class DB {
       callback(values || initialStats)
     })
 
-    this.#abortController.signal.addEventListener('abort', () => {
+    this.#abortSignal.addEventListener('abort', () => {
       unsubscribe()
     })
   }

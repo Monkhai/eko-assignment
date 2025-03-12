@@ -12,14 +12,12 @@ describe('DB', () => {
   })
 
   test('should initialize the db properly', () => {
-    const abortController = new AbortController()
-    const d = new DB(abortController, db, storage)
+    const d = createDB()
     expect(d).toBeDefined()
   })
 
   test('add like', async () => {
-    const abortController = new AbortController()
-    const d = new DB(abortController, db, storage)
+    const d = createDB()
     const dbName = 'video1'
     await d.handleLikeVideo(dbName)
     const r = ref(db, `videos/${dbName}/stats/likes`)
@@ -28,8 +26,7 @@ describe('DB', () => {
   })
 
   test('add dislike', async () => {
-    const abortController = new AbortController()
-    const d = new DB(abortController, db, storage)
+    const d = createDB()
     const dbName = 'video1'
     await d.handleDislikeVideo(dbName)
     const r = ref(db, `videos/${dbName}/stats/dislikes`)
@@ -38,8 +35,7 @@ describe('DB', () => {
   })
 
   test('update views', async () => {
-    const abortController = new AbortController()
-    const d = new DB(abortController, db, storage)
+    const d = createDB()
     const dbName = 'video1'
     await d.handleUpdateViews(dbName)
     const r = ref(db, `videos/${dbName}/stats/views`)
@@ -47,3 +43,8 @@ describe('DB', () => {
     expect(snapshot.val()).toBe(1)
   })
 })
+
+function createDB() {
+  const abortController = new AbortController()
+  return new DB(db, storage, abortController.signal)
+}
